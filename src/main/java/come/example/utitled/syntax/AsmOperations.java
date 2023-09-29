@@ -1,5 +1,7 @@
 package come.example.utitled.syntax;
 
+import org.apache.commons.lang3.StringUtils;
+
 public enum AsmOperations {
 
     MOV("mov", "Переместить"),
@@ -25,5 +27,9 @@ public enum AsmOperations {
 
     public String getDescription() {
         return description;
+    }
+
+    public static AsmOperations readOperation(String operation) {
+        return valueOf(StringUtils.upperCase(operation));
     }
 }

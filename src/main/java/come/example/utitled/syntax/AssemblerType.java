@@ -1,5 +1,7 @@
 package come.example.utitled.syntax;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * Типы данных во входящей программе
  */
@@ -16,5 +18,9 @@ public enum AssemblerType {
         this.name = name;
         this.size = size;
         this.description = description;
+    }
+
+    public static AssemblerType readAsmType(String type) {
+        return valueOf(StringUtils.upperCase(type));
     }
 }
