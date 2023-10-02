@@ -16,10 +16,5 @@ public class Main {
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
-        try {
-            programParser.parse();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

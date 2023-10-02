@@ -8,6 +8,8 @@ public abstract class Command {
 
     public abstract String getValue1();
     public abstract String getValue2();
+    public abstract void setValue1(String command);
+    public abstract void setValue2(String command);
 
     public AsmOperations getOperator() {
         return operator;

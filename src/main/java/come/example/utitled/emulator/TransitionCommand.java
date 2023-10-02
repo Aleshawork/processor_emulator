@@ -2,32 +2,33 @@ package come.example.utitled.emulator;
 
 import come.example.utitled.syntax.AsmOperations;
 
-public class UnarCommand extends Command {
+public class TransitionCommand extends Command{
 
-    private String value1;
+    private String nameFunctionRef;
 
-    public UnarCommand(AsmOperations operator, String value1) {
-        this.operator = operator;
-        this.value1 = value1;
+    public TransitionCommand(AsmOperations operations, String nameFunctionRef) {
+        this.operator = operations;
+        this.nameFunctionRef = nameFunctionRef;
     }
+
+
     @Override
     public String getValue1() {
-        return value1;
+        return nameFunctionRef;
     }
 
     @Override
     public String getValue2() {
-        return null;
+       return null;
     }
 
     @Override
     public void setValue1(String command) {
-        this.value1 = value1;
+        this.nameFunctionRef = command;
     }
 
     @Override
     public void setValue2(String command) {
         // do nothing
     }
-
 }

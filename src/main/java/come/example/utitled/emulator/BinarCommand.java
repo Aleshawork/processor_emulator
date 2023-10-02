@@ -23,11 +23,13 @@ public class BinarCommand extends Command {
         return value2;
     }
 
-    public void setValue1(String value1) {
-        this.value1 = value1;
+    @Override
+    public void setValue1(String command) {
+        this.value1 = command;
     }
 
-    public void setValue2(String value2) {
-        this.value2 = value2;
+    @Override
+    public void setValue2(String command) {
+        this.value2 = command;
     }
 }

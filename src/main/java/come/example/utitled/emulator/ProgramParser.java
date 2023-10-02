@@ -7,11 +7,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.Arrays;
+import java.util.List;
 
 import static come.example.utitled.emulator.Configuration.PROGRAM_ENCODING;
 
 public class ProgramParser {
-
+    private static final String[] replaceableCharacters = {";", ",", ":"};
+    private static final String[] substituteCharacters = { "",  "",  ""};
     private static final String SECTION = "section";
     private static final String SECTION_DATA = ".data";
     private static final String SECTION_TEXT = ".text";
@@ -34,7 +37,7 @@ public class ProgramParser {
             InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, PROGRAM_ENCODING);
             this.bufferedReader = new BufferedReader(inputStreamReader);
         } catch (FileNotFoundException | UnsupportedEncodingException e) {
-            logger.error("Файл с программой не найден!");
+            logger.error("File  doesn't exist!");
             throw new FileNotFoundException();
         }
     }
@@ -50,7 +53,13 @@ public class ProgramParser {
     }
 
 
+    /**
+     * Считывание проограммы Asm из файла
+     * @return заполненный контекст программы
+     * @throws IOException
+     */
     public AsmProgramListing parse() throws IOException {
+        String function;
         String line = readNext();
         if (line.contains(SECTION) && line.contains(SECTION_DATA)) {
             line = readNext();
@@ -58,12 +67,12 @@ public class ProgramParser {
                 asmProgramListing.addData(asmDataReader.readData(line));
                 line = readNext();
             }
-
         }
         if (line.contains(SECTION) && line.contains(SECTION_TEXT)) {
             line = readNext();
             if (line.contains(GLOBAL)) {
-                asmProgramListing.setMainFunctionName(StringUtils.split(line, " ")[1]);
+                function = StringUtils.split(line, " ")[1];
+                asmProgramListing.setMainFunctionName(function);
                 line = readNext();
             } else {
                 throw  new RuntimeException("Program doesn't has global function in program!");
@@ -73,29 +82,37 @@ public class ProgramParser {
             } else {
                 while((line = readNext()) != null) {
                     if (line.contains(":")) {
-                        // todo:: обработка цикла
+                        function = StringUtils.split(line, ":")[0];
                         System.out.println(1);
                     } else if (line.contains(RET)) {
                         break;
                     } else {
                         Command command = null;
                         String[] s = line.split(" ");
-                        if (s.length == 2) {
+                        if (line.contains(AsmOperations.JNZ.getName())) {
+                            command = new TransitionCommand(AsmOperations.readOperation(s[0]), s[1]);
+                        } else if (s.length == 2) {
                             command = new UnarCommand(AsmOperations.readOperation(s[0]), s[1]);
                         } else if (s.length == 3) {
                             command = new BinarCommand(AsmOperations.readOperation(s[0]), s[1], s[2]);
                         } else {
-                            // do nothing
+                            throw new RuntimeException("Command reading error!");
                         }
-                        asmProgramListing.addCommands(command);
+                        asmProgramListing.addCommands(function, normalizeCommand(command));
                     }
                 }
             }
         } else {
-            throw new RuntimeException("Section .text doesn't exists !");
+            throw new RuntimeException("Section \".text\" doesn't exists !");
         }
 
         return new AsmProgramListing();
+    }
+
+    private Command normalizeCommand(Command command) {
+      command.setValue1(StringUtils.replaceEach(command.getValue1(), replaceableCharacters, substituteCharacters));
+      command.setValue2(StringUtils.replaceEach(command.getValue2(), replaceableCharacters, substituteCharacters));
+      return command;
     }
 
 }

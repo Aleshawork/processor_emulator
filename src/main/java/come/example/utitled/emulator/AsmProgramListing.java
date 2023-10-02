@@ -1,14 +1,13 @@
 package come.example.utitled.emulator;
 
+import com.google.common.collect.Lists;
 import come.example.utitled.syntax.AsmArray;
 import come.example.utitled.syntax.AsmData;
 import come.example.utitled.syntax.AsmNumber;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+/** Хранилище контекста программы на Asm **/
 public class AsmProgramListing {
 
     /** Хранилище массивов**/
@@ -36,7 +35,7 @@ public class AsmProgramListing {
     }
 
     /** Хранилище команд. Команды хранятся в порядке следования **/
-    private List<Command> commands = new ArrayList<>();
+    private Map<String, List<Command>> commands = new LinkedHashMap<>();
 
     public void addArray(AsmArray asmArray) {
         if (arrayReferenceMap.containsKey(asmArray.getName())) {
@@ -67,12 +66,21 @@ public class AsmProgramListing {
         this.mainFunctionName = mainFunctionName;
     }
 
-    public List<Command> getCommands() {
+
+    public void addCommands(String functionName, Command command) {
+        if (this.commands.containsKey(functionName)) {
+            this.commands.get(functionName).add(command);
+        } else {
+            this.commands.put(functionName, Lists.newArrayList(command));
+        }
+    }
+
+    public Map<String, List<Command>> getCommands() {
         return commands;
     }
 
-    public void addCommands(Command command) {
-        this.commands.add(command);
+    public List<Command> commandsByFunction(String functionName) {
+        return this.commands.get(functionName);
     }
 
     class ArrayReference {
