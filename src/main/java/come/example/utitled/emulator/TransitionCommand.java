@@ -2,6 +2,9 @@ package come.example.utitled.emulator;
 
 import come.example.utitled.syntax.AsmOperations;
 
+/**
+ * Команда перехода
+ */
 public class TransitionCommand extends Command{
 
     private String nameFunctionRef;

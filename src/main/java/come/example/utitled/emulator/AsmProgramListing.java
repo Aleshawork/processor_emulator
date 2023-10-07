@@ -24,18 +24,18 @@ public class AsmProgramListing {
 
     /** Хранилище переменных **/
     private List<AsmNumber> asmNumberList = new ArrayList<>();
+    
+    /** Хранилище команд. Команды хранятся в порядке следования **/
+    private Map<String, List<Command>> commands = new LinkedHashMap<>();
 
     /**
-     * Получение следующнго элемента массива из области памяти
+     * Получение следующнго элемента массива из контекста
      * @return
      */
     public Object getNextArraysValue() {
         arraysHolderCursor++;
         return arraysHolder.get(arraysHolderCursor);
     }
-
-    /** Хранилище команд. Команды хранятся в порядке следования **/
-    private Map<String, List<Command>> commands = new LinkedHashMap<>();
 
     public void addArray(AsmArray asmArray) {
         if (arrayReferenceMap.containsKey(asmArray.getName())) {
@@ -47,7 +47,7 @@ public class AsmProgramListing {
     }
 
     /**
-     * Добавление переменных и массивов в память программы
+     * Добавление переменных и массивов в контекст
      * @param asmData
      */
     public void addData(AsmData asmData) {
