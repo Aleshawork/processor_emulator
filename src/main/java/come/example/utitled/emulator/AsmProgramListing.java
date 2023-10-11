@@ -1,6 +1,7 @@
 package come.example.utitled.emulator;
 
 import com.google.common.collect.Lists;
+import come.example.utitled.emulator.asm.structure.Command;
 import come.example.utitled.syntax.AsmArray;
 import come.example.utitled.syntax.AsmData;
 import come.example.utitled.syntax.AsmNumber;
@@ -37,6 +38,11 @@ public class AsmProgramListing {
         return arraysHolder.get(arraysHolderCursor);
     }
 
+    public Iterator<Map.Entry<String, List<Command>>> getFunctionCommandIterator() {
+        return commands.entrySet().iterator();
+    }
+
+
     public void addArray(AsmArray asmArray) {
         if (arrayReferenceMap.containsKey(asmArray.getName())) {
             throw new RuntimeException(String.format("Массив с именем %s уже существует!", asmArray.getName()));
@@ -71,7 +77,9 @@ public class AsmProgramListing {
         if (this.commands.containsKey(functionName)) {
             this.commands.get(functionName).add(command);
         } else {
-            this.commands.put(functionName, Lists.newArrayList(command));
+            List<Command> commands = Lists.newLinkedList();
+            commands.add(command);
+            this.commands.put(functionName, commands);
         }
     }
 
@@ -81,25 +89,6 @@ public class AsmProgramListing {
 
     public List<Command> commandsByFunction(String functionName) {
         return this.commands.get(functionName);
-    }
-
-    class ArrayReference {
-        private int size;
-        private int firstPosition;
-
-
-        public ArrayReference(int size, int firstPosition) {
-            this.size = size;
-            this.firstPosition = firstPosition;
-        }
-
-        public int getSize() {
-            return size;
-        }
-
-        public int getFirstPosition() {
-            return firstPosition;
-        }
     }
 
 

@@ -9,11 +9,11 @@ public enum AsmOperations {
     ADD("add", "Сложение"),
 
     DEC("dec", "Декремент"),
-    JNZ("jnz", "Условный переход")
+    JNZ("jnz", "Условный переход") // jump if not zero
     ;
 
-    private String name;
-    private String description;
+    private final String name;
+    private final String description;
 
 
     AsmOperations(String name, String description) {

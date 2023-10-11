@@ -1,14 +1,15 @@
 package come.example.utitled.emulator;
 
-import come.example.utitled.syntax.AsmData;
+import come.example.utitled.emulator.asm.structure.BinarCommand;
+import come.example.utitled.emulator.asm.structure.Command;
+import come.example.utitled.emulator.asm.structure.TransitionCommand;
+import come.example.utitled.emulator.asm.structure.UnarCommand;
 import come.example.utitled.syntax.AsmOperations;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.List;
 
 import static come.example.utitled.emulator.Configuration.PROGRAM_ENCODING;
 
@@ -83,7 +84,6 @@ public class ProgramParser {
                 while((line = readNext()) != null) {
                     if (line.contains(":")) {
                         function = StringUtils.split(line, ":")[0];
-                        System.out.println(1);
                     } else if (line.contains(RET)) {
                         break;
                     } else {
@@ -106,7 +106,7 @@ public class ProgramParser {
             throw new RuntimeException("Section \".text\" doesn't exists !");
         }
 
-        return new AsmProgramListing();
+        return this.asmProgramListing;
     }
 
     private Command normalizeCommand(Command command) {

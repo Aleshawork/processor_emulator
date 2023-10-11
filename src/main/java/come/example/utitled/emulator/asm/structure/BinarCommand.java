@@ -1,15 +1,18 @@
-package come.example.utitled.emulator;
+package come.example.utitled.emulator.asm.structure;
 
 import come.example.utitled.syntax.AsmOperations;
 
-public class UnarCommand extends Command {
+public class BinarCommand extends Command {
 
     private String value1;
+    private String value2;
 
-    public UnarCommand(AsmOperations operator, String value1) {
-        this.operator = operator;
+    public BinarCommand(AsmOperations operations, String value1, String value2) {
+        this.operator = operations;
         this.value1 = value1;
+        this.value2 = value2;
     }
+
     @Override
     public String getValue1() {
         return value1;
@@ -17,17 +20,16 @@ public class UnarCommand extends Command {
 
     @Override
     public String getValue2() {
-        return null;
+        return value2;
     }
 
     @Override
     public void setValue1(String command) {
-        this.value1 = value1;
+        this.value1 = command;
     }
 
     @Override
     public void setValue2(String command) {
-        // do nothing
+        this.value2 = command;
     }
-
 }
