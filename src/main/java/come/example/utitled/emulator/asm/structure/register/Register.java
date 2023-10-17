@@ -47,9 +47,7 @@ public abstract class Register<T> {
         return this.registerType;
     }
 
-    public T getValue() {
-        return full == null ? young : full;
-    }
+    public abstract T getValue();
 
     public RegisterName getRegisterName() {
         return registerName;

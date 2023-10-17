@@ -1,11 +1,16 @@
 package come.example.utitled.emulator;
 
 import com.google.common.collect.Lists;
+import come.example.utitled.emulator.asm.structure.BinarCommand;
 import come.example.utitled.emulator.asm.structure.Command;
 import come.example.utitled.emulator.asm.structure.flag.ZeroFlag;
+import come.example.utitled.emulator.asm.structure.register.NumericRegister;
+import come.example.utitled.emulator.asm.structure.register.RefRegister;
 import come.example.utitled.emulator.asm.structure.register.Register;
+import come.example.utitled.emulator.asm.structure.register.RegisterName;
 import come.example.utitled.syntax.AsmOPerationRealization;
 import come.example.utitled.syntax.AsmOperations;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 
@@ -15,19 +20,33 @@ public class Emulator {
     private final List<String> supportedFullRegisters = Lists.newArrayList("eax","esi","ecx");
     private final List<String> supportedYangRegisters = Lists.newArrayList("ax","esi");
 
-    private AsmProgramListing asmProgramListing;
-    private List<Register> registers = new ArrayList<>();
+    private AsmProgramContext asmProgramContext;
+
+    /** наименование регистра - Регистр **/
+    private Map<String, Register> registers = new HashMap<>();
     private Iterator<Command> currentCommandIterator;
     private Iterator<Map.Entry<String, List<Command>>> functionCommandIterator;
     private ZeroFlag zeroFlag = new ZeroFlag();
 
-    public Emulator(AsmProgramListing asmProgramListing) {
-        this.asmProgramListing = asmProgramListing;
-        functionCommandIterator = asmProgramListing.getFunctionCommandIterator();
+    public Emulator(AsmProgramContext asmProgramContext) {
+        this.asmProgramContext = asmProgramContext;
+        functionCommandIterator = asmProgramContext.getFunctionCommandIterator();
         currentCommandIterator = functionCommandIterator.next().getValue().listIterator();
     }
 
 
+    public void start() {
+        Command command = doStep();
+        while(command!=null) {
+            processCommand(command);
+            command = doStep();
+        }
+    }
+
+    /**
+     * Получение очередной команды на выполнение из контекста
+     * @return Command
+     */
     public Command doStep() {
         Command command;
         if (currentCommandIterator.hasNext()) {
@@ -47,25 +66,77 @@ public class Emulator {
         //TODO: добавляем регистры, изменяем их стотстояние
         //TODO: реализация цикла при zeroFlag==0
         if (command.getOperator().equals(AsmOperations.XOR)) {
-            Register register = AsmOPerationRealization.XOR_REGISTER.apply();
+            //Register register = AsmOPerationRealization.XOR_REGISTER.apply();
         }
     }
 
-    private Object disassembling(Command command) {
-        AsmOperations operator = command.getOperator();
+    /**
+     * Определение типов аргументов
+     * @param command
+     * 1. регистр и регистр
+     * 2. регистр и ссылка на массив
+     * 3. регистр и значение
+     *  3.1 []
+     *  3.2 численное значение
+     * 4. регистр (унарная операция)
+     */
+    private void processCommand(Command command) {
+        if (command instanceof BinarCommand) {
+            Register firstRegister;
+            if (isRegister(command.getValue1()) && isRegister(command.getValue2())) {
+                // 1
+                firstRegister = processNumericRegister(command.getValue1(), 0);
+                firstRegister = calculate(command.getOperator(), processNumericRegister(command.getValue1(), 0), processNumericRegister(command.getValue2(), 0));
+
+            } else if (isRegister(command.getValue1()) && isReference(command.getValue2())) {
+                // 2
+
+            } else if (isRegister(command.getValue1()) && isValue(command.getValue2())) {
+                // 3
+
+            } else {
+                System.out.println(4);
+                // do something
+            }
+        } else {
+            // унарная команда
+            // инкримент, декримент, условный переход
+
+        }
+    }
+
+    /**
+     * Выполняет операцию ASM
+     * @param operator наименование операции
+     * @param firstRegister первый регистр
+     * @param secondRegister второй регистр
+     * @return изменившийся регистр
+     */
+    private Register calculate(AsmOperations operator, Register firstRegister, Register secondRegister) {
+        Register register = null;
         switch (operator) {
             case XOR:
-                if(isRegister(command.getValue2())) {
-                    
-                }
+                register = AsmOPerationRealization.XOR_REGISTER.apply(firstRegister, secondRegister);
+                break;
             case ADD:
-                System.out.println(2);
+                register = AsmOPerationRealization.ADD_REGISTER.apply(firstRegister, secondRegister);
+                break;
+            case MOV:
+                register = AsmOPerationRealization.MOV_REGISTER.apply(firstRegister, secondRegister);
             default:
                 System.out.println(3);
         }
-        return null;
+        firstRegister = register;
+        return firstRegister;
     }
 
+    /**
+     * Проверка на допустимость проверяемого регистра в рамках эмулятора.
+     * @param name имя регистра в команде
+     * @return
+     * @see Emulator#supportedFullRegisters 32 битные регистры
+     * @see Emulator#supportedYangRegisters 16 битные регистры
+     */
     private boolean isRegister(String name) {
         if (supportedFullRegisters.contains(name) || supportedYangRegisters.contains(name)) {
             return true;
@@ -73,13 +144,52 @@ public class Emulator {
             return false;
     }
 
-    public void start() {
-        Command command = doStep();
-        while(command!=null) {
-            operate(command);
-            command = doStep();
-        }
+    /**
+     *
+     * @param name
+     * @return
+     */
+    private boolean isReference(String name) {
+        if (asmProgramContext.hasArray(name)) {
+            return true;
+        } else
+            return false;
     }
+
+    private boolean isValue(String name) {
+        return name.contains("[") || (!isReference(name) && !isRegister(name));
+    }
+
+    /**
+     * Обработчик численных регистров.
+     * Если регистр отсутствует в контексте, то добавляет и устанавливает указанное значение
+     * @param name имя регистра
+     * @param value значение регистра
+     * @return Register
+     */
+    public Register processNumericRegister(String name, Integer value) {
+        NumericRegister numericRegister;
+        if (supportedYangRegisters.contains(name) && !registers.containsKey(name)) {
+            numericRegister = new NumericRegister(RegisterName.valueOf(StringUtils.toRootUpperCase(name)), null, value);
+        } else if (supportedFullRegisters.contains(name) && !registers.containsKey(name)) {
+            numericRegister = new NumericRegister(RegisterName.valueOf(StringUtils.toRootUpperCase(name)), value, null);
+        } else {
+            numericRegister = (NumericRegister) registers.get(name);
+        }
+        return numericRegister;
+    }
+
+    /**
+     * Обработчик ссылочных регистров.
+     * Если регистр отсутствует в контексте, то добавляет.
+     * @param name имя регистра
+     * @return Register
+     */
+    public Register processRefRegister(String name) {
+        RefRegister refRegister;
+        return null;
+    }
+
 
 
 

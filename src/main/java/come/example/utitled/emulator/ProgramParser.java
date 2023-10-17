@@ -21,7 +21,7 @@ public class ProgramParser {
     private static final String SECTION_TEXT = ".text";
     private static final String GLOBAL = "global";
     private static final String RET = "ret";
-    private final AsmProgramListing asmProgramListing;
+    private final AsmProgramContext asmProgramContext;
     private final AsmDataReader asmDataReader;
 
 
@@ -29,9 +29,9 @@ public class ProgramParser {
 
     private BufferedReader bufferedReader;
 
-    public ProgramParser(AsmProgramListing asmProgramListing) throws FileNotFoundException {
-        this.asmProgramListing = asmProgramListing;
-        asmDataReader = new AsmDataReader(asmProgramListing);
+    public ProgramParser(AsmProgramContext asmProgramContext) throws FileNotFoundException {
+        this.asmProgramContext = asmProgramContext;
+        asmDataReader = new AsmDataReader(asmProgramContext);
         try {
             File file = new File(Configuration.PROGRAM_PATH);
             FileInputStream fileInputStream = new FileInputStream(file);
@@ -59,13 +59,13 @@ public class ProgramParser {
      * @return заполненный контекст программы
      * @throws IOException
      */
-    public AsmProgramListing parse() throws IOException {
+    public AsmProgramContext parse() throws IOException {
         String function;
         String line = readNext();
         if (line.contains(SECTION) && line.contains(SECTION_DATA)) {
             line = readNext();
             while(!line.contains(SECTION_TEXT)) {
-                asmProgramListing.addData(asmDataReader.readData(line));
+                asmProgramContext.addData(asmDataReader.readData(line));
                 line = readNext();
             }
         }
@@ -73,12 +73,12 @@ public class ProgramParser {
             line = readNext();
             if (line.contains(GLOBAL)) {
                 function = StringUtils.split(line, " ")[1];
-                asmProgramListing.setMainFunctionName(function);
+                asmProgramContext.setMainFunctionName(function);
                 line = readNext();
             } else {
                 throw  new RuntimeException("Program doesn't has global function in program!");
             }
-            if (!line.contains(asmProgramListing.getMainFunctionName())) {
+            if (!line.contains(asmProgramContext.getMainFunctionName())) {
                 throw new RuntimeException("Doesn't find global function in code!");
             } else {
                 while((line = readNext()) != null) {
@@ -98,7 +98,7 @@ public class ProgramParser {
                         } else {
                             throw new RuntimeException("Command reading error!");
                         }
-                        asmProgramListing.addCommands(function, normalizeCommand(command));
+                        asmProgramContext.addCommands(function, normalizeCommand(command));
                     }
                 }
             }
@@ -106,7 +106,7 @@ public class ProgramParser {
             throw new RuntimeException("Section \".text\" doesn't exists !");
         }
 
-        return this.asmProgramListing;
+        return this.asmProgramContext;
     }
 
     private Command normalizeCommand(Command command) {

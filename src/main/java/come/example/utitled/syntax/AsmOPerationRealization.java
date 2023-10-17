@@ -7,10 +7,24 @@ import java.util.function.BiFunction;
 public class AsmOPerationRealization {
 
     public static BiFunction<Register, Register, Register> XOR_REGISTER = (reg1, reg2) -> {
-        int i = (Integer) reg1.getValue() ^ (Integer) reg2.getValue();
-        reg1.setValue(reg1.getRegisterType(), reg1.getValue());
+        int value = (Integer) reg1.getValue() ^ (Integer) reg2.getValue();
+        reg1.setValue(reg1.getRegisterType(), value);
         return reg1;
     };
+
+    public static BiFunction<Register, Register, Register> ADD_REGISTER = (reg1, reg2) -> {
+        int value = (Integer) reg1.getValue() + (Integer) reg2.getValue();
+        reg1.setValue(reg1.getRegisterType(), value);
+        return reg1;
+    };
+
+    public static BiFunction<Register, Register, Register> MOV_REGISTER = (reg1, reg2) -> {
+        int value = (Integer) reg2.getValue();
+        reg1.setValue(reg1.getRegisterType(), value);
+        return reg1;
+    };
+
+
 
 
 }

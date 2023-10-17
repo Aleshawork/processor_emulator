@@ -13,9 +13,9 @@ import java.util.regex.Pattern;
 
 public class AsmDataReader {
 
-    private final AsmProgramListing programListing;
+    private final AsmProgramContext programListing;
 
-    public AsmDataReader(AsmProgramListing programListing) {
+    public AsmDataReader(AsmProgramContext programListing) {
         this.programListing = programListing;
     }
 

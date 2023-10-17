@@ -9,7 +9,7 @@ import come.example.utitled.syntax.AsmNumber;
 import java.util.*;
 
 /** Хранилище контекста программы на Asm **/
-public class AsmProgramListing {
+public class AsmProgramContext {
 
     /** Хранилище массивов**/
     private List<Object> arraysHolder = new ArrayList<>();
@@ -62,6 +62,15 @@ public class AsmProgramListing {
         } else {
             this.asmNumberList.add((AsmNumber) asmData);
         }
+    }
+
+    /**
+     * Проверка наличия массива в контексте по имени
+     * @param name имя массива
+     * @return
+     */
+    public boolean hasArray(String name) {
+        return arrayReferenceMap.containsKey(name);
     }
 
     public String getMainFunctionName() {

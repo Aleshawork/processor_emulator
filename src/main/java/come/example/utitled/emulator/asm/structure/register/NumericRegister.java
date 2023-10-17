@@ -3,7 +3,7 @@ package come.example.utitled.emulator.asm.structure.register;
 /**
  * Представляет регистр для хранения целых чисел и операции над ними
  */
-public class NumericRegister extends Register<Integer> implements RegisterOperations{
+public class NumericRegister extends Register<Integer> {
 
     public NumericRegister(RegisterName registerName, Integer full, Integer young) {
         super(registerName, full, young);
@@ -19,27 +19,7 @@ public class NumericRegister extends Register<Integer> implements RegisterOperat
     }
 
     @Override
-    public void mov(Object value) {
-        this.setValue(this.getRegisterType(), (Integer) value);
-    }
-
-    @Override
-    public void xor(Object value) {
-
-    }
-
-    @Override
-    public void add(Object value) {
-
-    }
-
-    @Override
-    public void dec(Object value) {
-
-    }
-
-    @Override
-    public void jnz(Object value) {
-
+    public Integer getValue() {
+        return full == null ? young : full;
     }
 }
