@@ -6,16 +6,18 @@ import come.example.utitled.syntax.AsmArray;
 import come.example.utitled.syntax.AsmData;
 import come.example.utitled.syntax.AsmNumber;
 
+import java.lang.ref.Reference;
 import java.util.*;
 
 /** Хранилище контекста программы на Asm **/
 public class AsmProgramContext {
 
     /** Хранилище массивов**/
-    private List<Object> arraysHolder = new ArrayList<>();
+    private static List<Object> arraysHolder = new ArrayList<>();
 
-    /** Ссылки на расположение массивов в хранилище **/
-    private Map<String, ArrayReference> arrayReferenceMap = new HashMap();
+    /** Ссылки на расположение массивов в хранилище
+     * Key-наименование массива **/
+    private static Map<String, ArrayReference> arrayReferenceMap = new HashMap();
 
     /** Текущее положение **/
     private int arraysHolderCursor = 0;
@@ -52,6 +54,11 @@ public class AsmProgramContext {
         }
     }
 
+
+    public static ArrayReference getArrayReferenceByName(String name) {
+        return arrayReferenceMap.get(name);
+    }
+
     /**
      * Добавление переменных и массивов в контекст
      * @param asmData
@@ -64,12 +71,16 @@ public class AsmProgramContext {
         }
     }
 
+    public static List<Object> getArraysHolder() {
+        return arraysHolder;
+    }
+
     /**
      * Проверка наличия массива в контексте по имени
      * @param name имя массива
      * @return
      */
-    public boolean hasArray(String name) {
+    public static boolean hasArray(String name) {
         return arrayReferenceMap.containsKey(name);
     }
 

@@ -23,7 +23,7 @@ public class Emulator {
     private AsmProgramContext asmProgramContext;
 
     /** наименование регистра - Регистр **/
-    private Map<String, Register> registers = new HashMap<>();
+    private Map<RegisterName, Register> registers = new HashMap<>();
     private Iterator<Command> currentCommandIterator;
     private Iterator<Map.Entry<String, List<Command>>> functionCommandIterator;
     private ZeroFlag zeroFlag = new ZeroFlag();
@@ -86,10 +86,13 @@ public class Emulator {
             if (isRegister(command.getValue1()) && isRegister(command.getValue2())) {
                 // 1
                 firstRegister = processNumericRegister(command.getValue1(), 0);
-                firstRegister = calculate(command.getOperator(), processNumericRegister(command.getValue1(), 0), processNumericRegister(command.getValue2(), 0));
+                firstRegister = calculate(command.getOperator(), firstRegister, processNumericRegister(command.getValue2(), 0));
 
             } else if (isRegister(command.getValue1()) && isReference(command.getValue2())) {
-                // 2
+                RefRegister refRegister = processRefRegister(command.getValue2());
+                firstRegister = processNumericRegister(command.getValue1(), 0);
+                firstRegister = calculate(command.getOperator(), firstRegister, refRegister);
+
 
             } else if (isRegister(command.getValue1()) && isValue(command.getValue2())) {
                 // 3
@@ -103,6 +106,7 @@ public class Emulator {
             // инкримент, декримент, условный переход
 
         }
+
     }
 
     /**
@@ -122,7 +126,9 @@ public class Emulator {
                 register = AsmOPerationRealization.ADD_REGISTER.apply(firstRegister, secondRegister);
                 break;
             case MOV:
-                register = AsmOPerationRealization.MOV_REGISTER.apply(firstRegister, secondRegister);
+                register = secondRegister instanceof RefRegister ? AsmOPerationRealization.MOV_REF_REGISTER.apply(firstRegister, secondRegister) :
+                        AsmOPerationRealization.MOV_REGISTER.apply(firstRegister, secondRegister);
+                registers.replace(register.getRegisterName(), register);
             default:
                 System.out.println(3);
         }
@@ -161,20 +167,25 @@ public class Emulator {
     }
 
     /**
-     * Обработчик численных регистров.
-     * Если регистр отсутствует в контексте, то добавляет и устанавливает указанное значение
+     * Устанавливает переданное значение найденному в контексте по имени регитру и возвращает его.
+     * Если регистр отсутствует в контексте, то добавляет в контекст и устанавливает указанное значение
      * @param name имя регистра
      * @param value значение регистра
      * @return Register
      */
-    public Register processNumericRegister(String name, Integer value) {
+    public NumericRegister processNumericRegister(String name, Integer value) {
         NumericRegister numericRegister;
-        if (supportedYangRegisters.contains(name) && !registers.containsKey(name)) {
-            numericRegister = new NumericRegister(RegisterName.valueOf(StringUtils.toRootUpperCase(name)), null, value);
-        } else if (supportedFullRegisters.contains(name) && !registers.containsKey(name)) {
-            numericRegister = new NumericRegister(RegisterName.valueOf(StringUtils.toRootUpperCase(name)), value, null);
+        if (registers.containsKey(name)) {
+            return (NumericRegister) registers.get(name);
         } else {
-            numericRegister = (NumericRegister) registers.get(name);
+            if (supportedYangRegisters.contains(name) && !registers.containsKey(name)) {
+                numericRegister = new NumericRegister(RegisterName.valueOf(StringUtils.toRootUpperCase(name)), null, value);
+            } else if (supportedFullRegisters.contains(name) && !registers.containsKey(name)) {
+                numericRegister = new NumericRegister(RegisterName.valueOf(StringUtils.toRootUpperCase(name)), value, null);
+            } else {
+                throw new RuntimeException(String.format("Проблема инициализации регистра %s", name));
+            }
+            registers.put(RegisterName.valueOf(StringUtils.toRootUpperCase(name)), numericRegister);
         }
         return numericRegister;
     }
@@ -185,9 +196,17 @@ public class Emulator {
      * @param name имя регистра
      * @return Register
      */
-    public Register processRefRegister(String name) {
+    public RefRegister processRefRegister(String name) {
         RefRegister refRegister;
-        return null;
+
+        if (AsmProgramContext.hasArray(name)) {
+            ArrayReference arrayReference = AsmProgramContext.getArrayReferenceByName(name);
+            refRegister = new RefRegister(RegisterName.REF, arrayReference, null );
+        } else {
+            throw new RuntimeException(String.format("Массив не найден :%s", name));
+        }
+
+        return refRegister;
     }
 
 

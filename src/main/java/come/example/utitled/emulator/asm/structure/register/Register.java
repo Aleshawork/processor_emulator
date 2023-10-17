@@ -1,5 +1,7 @@
 package come.example.utitled.emulator.asm.structure.register;
 
+import come.example.utitled.emulator.ArrayReference;
+
 import java.util.Objects;
 
 /**
@@ -10,9 +12,9 @@ import java.util.Objects;
  */
 public abstract class Register<T> {
 
-    private RegisterName registerName;
+    protected RegisterName registerName;
 
-    private RegisterType registerType;
+    protected RegisterType registerType;
 
     /** Весь регистр **/
     protected T full;
@@ -34,7 +36,7 @@ public abstract class Register<T> {
     }
 
     public void setValue(RegisterType registerType, T value) {
-       if (RegisterType.FULL.equals(registerType)) {
+       if (RegisterType.FULL.equals(registerType) || value instanceof ArrayReference) {
            this.full = value;
            this.young = null;
        } else {
@@ -51,6 +53,10 @@ public abstract class Register<T> {
 
     public RegisterName getRegisterName() {
         return registerName;
+    }
+
+    public void setRegisterName(RegisterName registerName) {
+        this.registerName = registerName;
     }
 
     abstract void addValue(RegisterType registerType, Object value);

@@ -1,6 +1,7 @@
 package come.example.utitled.emulator.asm.structure.register;
 
 import come.example.utitled.emulator.ArrayReference;
+import come.example.utitled.emulator.AsmProgramContext;
 
 import java.util.Objects;
 
@@ -12,6 +13,7 @@ public class RefRegister extends Register<ArrayReference>{
     /** количество считанных элементов с начала массива **/
     private int position;
 
+    /** ссылка хранится в full **/
     public RefRegister(RegisterName registerName, ArrayReference full, ArrayReference young) {
         super(registerName, full, young);
         position = 0;
@@ -19,11 +21,25 @@ public class RefRegister extends Register<ArrayReference>{
 
     @Override
     public ArrayReference getValue() {
+        return full;
+    }
+
+    public void iterate() {
         position++;
-        ArrayReference arrayReference = getArrayReference();
+    }
 
-
-        return null;
+    /**
+     * Получение текущего значения
+     * @return
+     */
+    public Object getCurrentValue() {
+        int firstPosition = young.getFirstPosition();
+        int size = young.getSize();
+        int currentPosition = firstPosition + position;
+        if (currentPosition > size) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+        return AsmProgramContext.getArraysHolder().get(position);
     }
 
     @Override
