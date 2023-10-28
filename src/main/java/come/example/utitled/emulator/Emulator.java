@@ -8,6 +8,9 @@ import come.example.utitled.emulator.asm.structure.register.NumericRegister;
 import come.example.utitled.emulator.asm.structure.register.RefRegister;
 import come.example.utitled.emulator.asm.structure.register.Register;
 import come.example.utitled.emulator.asm.structure.register.RegisterName;
+import come.example.utitled.emulator.exceptions.NotFoundBinaryCommandException;
+import come.example.utitled.emulator.exceptions.NotFoundBinaryValueCommandException;
+import come.example.utitled.emulator.exceptions.NotFountUnarCommandAsmException;
 import come.example.utitled.syntax.AsmOPerationRealization;
 import come.example.utitled.syntax.AsmOperations;
 import org.apache.commons.lang3.StringUtils;
@@ -62,27 +65,21 @@ public class Emulator {
         return command;
     }
 
-    public void operate(Command command) {
-        //TODO: добавляем регистры, изменяем их стотстояние
-        //TODO: реализация цикла при zeroFlag==0
-        if (command.getOperator().equals(AsmOperations.XOR)) {
-            //Register register = AsmOPerationRealization.XOR_REGISTER.apply();
-        }
-    }
 
     /**
      * Определение типов аргументов
      * @param command
      * 1. регистр и регистр
      * 2. регистр и ссылка на массив
-     * 3. регистр и значение
+     * 3. регистр и значение || ссылка
      *  3.1 []
-     *  3.2 численное значение
+     *  3.2 [array]
+     *  3.3 численное значение
      * 4. регистр (унарная операция)
      */
     private void processCommand(Command command) {
+        Register firstRegister;
         if (command instanceof BinarCommand) {
-            Register firstRegister;
             if (isRegister(command.getValue1()) && isRegister(command.getValue2())) {
                 // 1
                 firstRegister = processNumericRegister(command.getValue1(), 0);
@@ -93,20 +90,83 @@ public class Emulator {
                 firstRegister = processNumericRegister(command.getValue1(), 0);
                 firstRegister = calculate(command.getOperator(), firstRegister, refRegister);
 
-
             } else if (isRegister(command.getValue1()) && isValue(command.getValue2())) {
                 // 3
+                firstRegister = processNumericRegister(command.getValue1(), 0);
+                if (command.getValue2().contains("[")) {
+                    String argsName = StringUtils.replaceEach(command.getValue2(), new String[]{"[","]"}, new String[]{"", ""});
+                    // если [array]
+                    if (isRegister(argsName)) {
+                        firstRegister = calculate(command.getOperator(), firstRegister, registers.get(RegisterName.valueOf(StringUtils.toRootUpperCase(argsName))));
+                    } else {
+                        firstRegister = calculateWithValue(command.getOperator(), firstRegister, Integer.parseInt((String) asmProgramContext.getDataByName(argsName).getValue()));
+                    }
+                } else {
+
+                    firstRegister = calculateWithValue(command.getOperator(), firstRegister, Integer.valueOf(command.getValue2()));
+
+                }
 
             } else {
                 System.out.println(4);
                 // do something
             }
         } else {
+            if (command.getOperator().equals(AsmOperations.JNZ)) {
+                if (!ZeroFlag.isEnd()) {
+                    //TODO: переставить итератор на начало цикла
+                    currentCommandIterator = asmProgramContext.getCommands().get(command.getValue1()).iterator();
+                    return;
+
+                } else {
+                    // do nothing
+                    System.out.println("end");
+                    return;
+                }
+            }
+            firstRegister = processNumericRegister(command.getValue1(), 0);
+            firstRegister = calculateUnarCommand(command.getOperator(), firstRegister);
             // унарная команда
             // инкримент, декримент, условный переход
 
         }
 
+    }
+
+    private Register calculateUnarCommand(AsmOperations operator, Register register) {
+        switch (operator) {
+            case DEC:
+                register = AsmOPerationRealization.DEC_VALUE.apply(register);
+                NumericRegister numericRegister = (NumericRegister) register;
+                if (register.getValue().equals(0)) {
+                    ZeroFlag.changeFlag();
+                }
+                break;
+            default:
+                throw new NotFountUnarCommandAsmException(String.format("Не найдена бинарная опреация: %s", operator.getName()));
+        }
+        return register;
+    }
+
+    private Register calculateWithValue(AsmOperations operator, Register firstRegister, Integer value) {
+        Register register = null;
+        switch (operator) {
+            case MOV:
+                register = AsmOPerationRealization.MOVE_VALUE.apply(firstRegister, value);
+                break;
+            case ADD:
+                if (firstRegister instanceof RefRegister) {
+                    RefRegister ref = (RefRegister) firstRegister;
+                    ref.iterate(value/2);
+                    register = ref;
+                } else {
+                    register = AsmOPerationRealization.ADD_VALUE.apply(firstRegister, value);
+                }
+                break;
+            default:
+                throw new NotFoundBinaryValueCommandException(String.format("Не найдена бинарная опреация: %s", operator.getName()));
+        }
+        return register;
     }
 
     /**
@@ -129,12 +189,14 @@ public class Emulator {
                 register = secondRegister instanceof RefRegister ? AsmOPerationRealization.MOV_REF_REGISTER.apply(firstRegister, secondRegister) :
                         AsmOPerationRealization.MOV_REGISTER.apply(firstRegister, secondRegister);
                 registers.replace(register.getRegisterName(), register);
+                break;
             default:
-                System.out.println(3);
+                throw new NotFoundBinaryCommandException(String.format("Не найдена бинарная опреация: %s", operator.getName()));
         }
         firstRegister = register;
         return firstRegister;
     }
+
 
     /**
      * Проверка на допустимость проверяемого регистра в рамках эмулятора.
@@ -173,10 +235,10 @@ public class Emulator {
      * @param value значение регистра
      * @return Register
      */
-    public NumericRegister processNumericRegister(String name, Integer value) {
+    public Register processNumericRegister(String name, Integer value) {
         NumericRegister numericRegister;
-        if (registers.containsKey(name)) {
-            return (NumericRegister) registers.get(name);
+        if (registers.containsKey(RegisterName.valueOf(StringUtils.toRootUpperCase(name)))) {
+            return  registers.get(RegisterName.valueOf(StringUtils.toRootUpperCase(name)));
         } else {
             if (supportedYangRegisters.contains(name) && !registers.containsKey(name)) {
                 numericRegister = new NumericRegister(RegisterName.valueOf(StringUtils.toRootUpperCase(name)), null, value);

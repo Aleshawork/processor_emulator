@@ -13,7 +13,7 @@ import java.util.*;
 public class AsmProgramContext {
 
     /** Хранилище массивов**/
-    private static List<Object> arraysHolder = new ArrayList<>();
+    public static List<Object> arraysHolder = new ArrayList<>();
 
     /** Ссылки на расположение массивов в хранилище
      * Key-наименование массива **/
@@ -69,6 +69,18 @@ public class AsmProgramContext {
         } else {
             this.asmNumberList.add((AsmNumber) asmData);
         }
+    }
+
+    /**
+     * Получение знаений переменных по имени
+     * @param name имя переменной в программе
+     * @return
+     */
+    public  AsmNumber getDataByName(String name) {
+        return asmNumberList.stream()
+                .filter(el -> el.getName().equals(name))
+                .findFirst()
+                .orElseThrow();
     }
 
     public static List<Object> getArraysHolder() {

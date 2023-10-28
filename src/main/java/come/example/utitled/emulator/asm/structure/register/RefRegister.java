@@ -24,8 +24,8 @@ public class RefRegister extends Register<ArrayReference>{
         return full;
     }
 
-    public void iterate() {
-        position++;
+    public void iterate(int delta) {
+        position+=delta;
     }
 
     /**
@@ -54,4 +54,7 @@ public class RefRegister extends Register<ArrayReference>{
             return full;
     }
 
+    public int getPosition() {
+        return position;
+    }
 }

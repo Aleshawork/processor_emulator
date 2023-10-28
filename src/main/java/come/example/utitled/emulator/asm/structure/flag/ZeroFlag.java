@@ -15,4 +15,8 @@ public class ZeroFlag {
         value = !value;
         return value;
     }
+
+    public static boolean isEnd() {
+        return !value;
+    }
 }
