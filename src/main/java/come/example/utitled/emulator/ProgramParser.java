@@ -1,14 +1,15 @@
 package come.example.utitled.emulator;
 
-import come.example.utitled.syntax.AsmData;
+import come.example.utitled.emulator.asm.structure.BinarCommand;
+import come.example.utitled.emulator.asm.structure.Command;
+import come.example.utitled.emulator.asm.structure.TransitionCommand;
+import come.example.utitled.emulator.asm.structure.UnarCommand;
 import come.example.utitled.syntax.AsmOperations;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.List;
 
 import static come.example.utitled.emulator.Configuration.PROGRAM_ENCODING;
 
@@ -20,7 +21,7 @@ public class ProgramParser {
     private static final String SECTION_TEXT = ".text";
     private static final String GLOBAL = "global";
     private static final String RET = "ret";
-    private final AsmProgramListing asmProgramListing;
+    private final AsmProgramContext asmProgramContext;
     private final AsmDataReader asmDataReader;
 
 
@@ -28,9 +29,9 @@ public class ProgramParser {
 
     private BufferedReader bufferedReader;
 
-    public ProgramParser(AsmProgramListing asmProgramListing) throws FileNotFoundException {
-        this.asmProgramListing = asmProgramListing;
-        asmDataReader = new AsmDataReader(asmProgramListing);
+    public ProgramParser(AsmProgramContext asmProgramContext) throws FileNotFoundException {
+        this.asmProgramContext = asmProgramContext;
+        asmDataReader = new AsmDataReader(asmProgramContext);
         try {
             File file = new File(Configuration.PROGRAM_PATH);
             FileInputStream fileInputStream = new FileInputStream(file);
@@ -58,13 +59,13 @@ public class ProgramParser {
      * @return заполненный контекст программы
      * @throws IOException
      */
-    public AsmProgramListing parse() throws IOException {
+    public AsmProgramContext parse() throws IOException {
         String function;
         String line = readNext();
         if (line.contains(SECTION) && line.contains(SECTION_DATA)) {
             line = readNext();
             while(!line.contains(SECTION_TEXT)) {
-                asmProgramListing.addData(asmDataReader.readData(line));
+                asmProgramContext.addData(asmDataReader.readData(line));
                 line = readNext();
             }
         }
@@ -72,18 +73,17 @@ public class ProgramParser {
             line = readNext();
             if (line.contains(GLOBAL)) {
                 function = StringUtils.split(line, " ")[1];
-                asmProgramListing.setMainFunctionName(function);
+                asmProgramContext.setMainFunctionName(function);
                 line = readNext();
             } else {
                 throw  new RuntimeException("Program doesn't has global function in program!");
             }
-            if (!line.contains(asmProgramListing.getMainFunctionName())) {
+            if (!line.contains(asmProgramContext.getMainFunctionName())) {
                 throw new RuntimeException("Doesn't find global function in code!");
             } else {
                 while((line = readNext()) != null) {
                     if (line.contains(":")) {
                         function = StringUtils.split(line, ":")[0];
-                        System.out.println(1);
                     } else if (line.contains(RET)) {
                         break;
                     } else {
@@ -98,7 +98,7 @@ public class ProgramParser {
                         } else {
                             throw new RuntimeException("Command reading error!");
                         }
-                        asmProgramListing.addCommands(function, normalizeCommand(command));
+                        asmProgramContext.addCommands(function, normalizeCommand(command));
                     }
                 }
             }
@@ -106,7 +106,7 @@ public class ProgramParser {
             throw new RuntimeException("Section \".text\" doesn't exists !");
         }
 
-        return new AsmProgramListing();
+        return this.asmProgramContext;
     }
 
     private Command normalizeCommand(Command command) {

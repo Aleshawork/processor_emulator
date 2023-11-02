@@ -4,7 +4,6 @@ section .data
 section .text
 global main
 main:
-    mov ebp, esp;
     xor eax, eax
     mov esi, array
     mov ecx, [size]

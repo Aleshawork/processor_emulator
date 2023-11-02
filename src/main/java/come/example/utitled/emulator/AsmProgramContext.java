@@ -1,20 +1,23 @@
 package come.example.utitled.emulator;
 
 import com.google.common.collect.Lists;
+import come.example.utitled.emulator.asm.structure.Command;
 import come.example.utitled.syntax.AsmArray;
 import come.example.utitled.syntax.AsmData;
 import come.example.utitled.syntax.AsmNumber;
 
+import java.lang.ref.Reference;
 import java.util.*;
 
 /** Хранилище контекста программы на Asm **/
-public class AsmProgramListing {
+public class AsmProgramContext {
 
     /** Хранилище массивов**/
-    private List<Object> arraysHolder = new ArrayList<>();
+    public static List<Object> arraysHolder = new ArrayList<>();
 
-    /** Ссылки на расположение массивов в хранилище **/
-    private Map<String, ArrayReference> arrayReferenceMap = new HashMap();
+    /** Ссылки на расположение массивов в хранилище
+     * Key-наименование массива **/
+    private static Map<String, ArrayReference> arrayReferenceMap = new HashMap();
 
     /** Текущее положение **/
     private int arraysHolderCursor = 0;
@@ -24,9 +27,12 @@ public class AsmProgramListing {
 
     /** Хранилище переменных **/
     private List<AsmNumber> asmNumberList = new ArrayList<>();
+    
+    /** Хранилище команд. Команды хранятся в порядке следования **/
+    private Map<String, List<Command>> commands = new LinkedHashMap<>();
 
     /**
-     * Получение следующнго элемента массива из области памяти
+     * Получение следующнго элемента массива из контекста
      * @return
      */
     public Object getNextArraysValue() {
@@ -34,8 +40,10 @@ public class AsmProgramListing {
         return arraysHolder.get(arraysHolderCursor);
     }
 
-    /** Хранилище команд. Команды хранятся в порядке следования **/
-    private Map<String, List<Command>> commands = new LinkedHashMap<>();
+    public Iterator<Map.Entry<String, List<Command>>> getFunctionCommandIterator() {
+        return commands.entrySet().iterator();
+    }
+
 
     public void addArray(AsmArray asmArray) {
         if (arrayReferenceMap.containsKey(asmArray.getName())) {
@@ -46,8 +54,13 @@ public class AsmProgramListing {
         }
     }
 
+
+    public static ArrayReference getArrayReferenceByName(String name) {
+        return arrayReferenceMap.get(name);
+    }
+
     /**
-     * Добавление переменных и массивов в память программы
+     * Добавление переменных и массивов в контекст
      * @param asmData
      */
     public void addData(AsmData asmData) {
@@ -56,6 +69,31 @@ public class AsmProgramListing {
         } else {
             this.asmNumberList.add((AsmNumber) asmData);
         }
+    }
+
+    /**
+     * Получение знаений переменных по имени
+     * @param name имя переменной в программе
+     * @return
+     */
+    public  AsmNumber getDataByName(String name) {
+        return asmNumberList.stream()
+                .filter(el -> el.getName().equals(name))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    public static List<Object> getArraysHolder() {
+        return arraysHolder;
+    }
+
+    /**
+     * Проверка наличия массива в контексте по имени
+     * @param name имя массива
+     * @return
+     */
+    public static boolean hasArray(String name) {
+        return arrayReferenceMap.containsKey(name);
     }
 
     public String getMainFunctionName() {
@@ -71,7 +109,9 @@ public class AsmProgramListing {
         if (this.commands.containsKey(functionName)) {
             this.commands.get(functionName).add(command);
         } else {
-            this.commands.put(functionName, Lists.newArrayList(command));
+            List<Command> commands = Lists.newLinkedList();
+            commands.add(command);
+            this.commands.put(functionName, commands);
         }
     }
 
@@ -81,25 +121,6 @@ public class AsmProgramListing {
 
     public List<Command> commandsByFunction(String functionName) {
         return this.commands.get(functionName);
-    }
-
-    class ArrayReference {
-        private int size;
-        private int firstPosition;
-
-
-        public ArrayReference(int size, int firstPosition) {
-            this.size = size;
-            this.firstPosition = firstPosition;
-        }
-
-        public int getSize() {
-            return size;
-        }
-
-        public int getFirstPosition() {
-            return firstPosition;
-        }
     }
 
 

@@ -1,8 +1,12 @@
-package come.example.utitled.emulator;
+package come.example.utitled.emulator.asm.structure;
 
+import come.example.utitled.emulator.asm.structure.Command;
 import come.example.utitled.syntax.AsmOperations;
 
-public class TransitionCommand extends Command{
+/**
+ * Команда перехода
+ */
+public class TransitionCommand extends Command {
 
     private String nameFunctionRef;
 
