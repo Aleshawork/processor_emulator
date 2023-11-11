@@ -41,9 +41,24 @@ public class Emulator {
     public void start() {
         Command command = doStep();
         while(command!=null) {
-            processCommand(command);
+            Map<RegisterName, Register> registerNameRegisterMap = processCommand(command);
+            outRegistersData(registerNameRegisterMap, command.commandToString());
             command = doStep();
         }
+    }
+
+    public void outRegistersData(Map<RegisterName, Register> registers, String command) {
+        System.out.println(String.format("Команда на выполнение: %s", command));
+        registers.entrySet()
+                .forEach(register -> {
+                    if (register.getValue() instanceof RefRegister) {
+                        System.out.println(String.format("%s  :  %s", register.getKey().name(), AsmProgramContext.getRefRegValue(((RefRegister)register.getValue()).getValue(), (RefRegister) register.getValue())));
+                    } else {
+                        System.out.println(String.format("%s  :  %s", register.getKey().name(), register.getValue().getValue()));
+                    }
+                });
+
+        System.out.println("-----------------------------------------------------");
     }
 
     /**
@@ -77,7 +92,7 @@ public class Emulator {
      *  3.3 численное значение
      * 4. регистр (унарная операция)
      */
-    private void processCommand(Command command) {
+    private Map<RegisterName, Register> processCommand(Command command) {
         Register firstRegister;
         if (command instanceof BinarCommand) {
             if (isRegister(command.getValue1()) && isRegister(command.getValue2())) {
@@ -116,12 +131,12 @@ public class Emulator {
                 if (!ZeroFlag.isEnd()) {
                     //TODO: переставить итератор на начало цикла
                     currentCommandIterator = asmProgramContext.getCommands().get(command.getValue1()).iterator();
-                    return;
+                    return registers;
 
                 } else {
                     // do nothing
                     System.out.println("end");
-                    return;
+                    return registers;
                 }
             }
             firstRegister = processNumericRegister(command.getValue1(), 0);
@@ -130,6 +145,7 @@ public class Emulator {
             // инкримент, декримент, условный переход
 
         }
+        return registers;
 
     }
 

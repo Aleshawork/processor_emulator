@@ -2,6 +2,7 @@ package come.example.utitled.emulator;
 
 import com.google.common.collect.Lists;
 import come.example.utitled.emulator.asm.structure.Command;
+import come.example.utitled.emulator.asm.structure.register.RefRegister;
 import come.example.utitled.syntax.AsmArray;
 import come.example.utitled.syntax.AsmData;
 import come.example.utitled.syntax.AsmNumber;
@@ -81,6 +82,13 @@ public class AsmProgramContext {
                 .filter(el -> el.getName().equals(name))
                 .findFirst()
                 .orElseThrow();
+    }
+
+    public static Object getRefRegValue(ArrayReference arrayReference, RefRegister refRegister) {
+        if (arraysHolder.size() <= arrayReference.getFirstPosition() + refRegister.getPosition()) {
+            return arraysHolder.get(arraysHolder.size() - 1);
+        }
+        return arraysHolder.get(arrayReference.getFirstPosition() + refRegister.getPosition());
     }
 
     public static List<Object> getArraysHolder() {

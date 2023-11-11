@@ -15,4 +15,8 @@ public abstract class Command {
         return operator;
     }
 
+    public String commandToString() {
+        return String.format("%s %s %s", getOperator().getName(), getValue1(), getValue2());
+    }
+
 }
