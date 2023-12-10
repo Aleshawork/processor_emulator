@@ -13,6 +13,13 @@ public class BinarCommand extends Command {
         this.value2 = value2;
     }
 
+    public BinarCommand(AsmOperations operations, String value1, String value2, Integer number) {
+        this.operator = operations;
+        this.value1 = value1;
+        this.value2 = value2;
+        this.number = number;
+    }
+
     @Override
     public String getValue1() {
         return value1;

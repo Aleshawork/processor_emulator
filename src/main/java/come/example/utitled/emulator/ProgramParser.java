@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static come.example.utitled.emulator.Configuration.PROGRAM_ENCODING;
 
@@ -23,6 +24,9 @@ public class ProgramParser {
     private static final String RET = "ret";
     private final AsmProgramContext asmProgramContext;
     private final AsmDataReader asmDataReader;
+
+
+    private static AtomicInteger commandCounter = new AtomicInteger(0);
 
 
     private Logger logger = LoggerFactory.getLogger(ProgramParser.class);
@@ -90,11 +94,11 @@ public class ProgramParser {
                         Command command = null;
                         String[] s = line.split(" ");
                         if (line.contains(AsmOperations.JNZ.getName())) {
-                            command = new TransitionCommand(AsmOperations.readOperation(s[0]), s[1]);
+                            command = new TransitionCommand(AsmOperations.readOperation(s[0]), s[1], getAndIncrementProgramCounter());
                         } else if (s.length == 2) {
-                            command = new UnarCommand(AsmOperations.readOperation(s[0]), s[1]);
+                            command = new UnarCommand(AsmOperations.readOperation(s[0]), s[1], getAndIncrementProgramCounter());
                         } else if (s.length == 3) {
-                            command = new BinarCommand(AsmOperations.readOperation(s[0]), s[1], s[2]);
+                            command = new BinarCommand(AsmOperations.readOperation(s[0]), s[1], s[2], getAndIncrementProgramCounter());
                         } else {
                             throw new RuntimeException("Command reading error!");
                         }
@@ -113,6 +117,10 @@ public class ProgramParser {
       command.setValue1(StringUtils.replaceEach(command.getValue1(), replaceableCharacters, substituteCharacters));
       command.setValue2(StringUtils.replaceEach(command.getValue2(), replaceableCharacters, substituteCharacters));
       return command;
+    }
+
+    public int getAndIncrementProgramCounter() {
+        return commandCounter.getAndIncrement();
     }
 
 }

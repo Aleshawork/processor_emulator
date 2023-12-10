@@ -9,6 +9,7 @@ import come.example.utitled.syntax.AsmNumber;
 
 import java.lang.ref.Reference;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** Хранилище контекста программы на Asm **/
 public class AsmProgramContext {
@@ -27,10 +28,13 @@ public class AsmProgramContext {
     private String mainFunctionName;
 
     /** Хранилище переменных **/
-    private List<AsmNumber> asmNumberList = new ArrayList<>();
+    private static List<AsmNumber> asmNumberList = new ArrayList<>();
     
     /** Хранилище команд. Команды хранятся в порядке следования **/
     private Map<String, List<Command>> commands = new LinkedHashMap<>();
+
+    public static String fisrtValue = null;
+    public static String secondValue = null;
 
     /**
      * Получение следующнго элемента массива из контекста
@@ -77,7 +81,7 @@ public class AsmProgramContext {
      * @param name имя переменной в программе
      * @return
      */
-    public  AsmNumber getDataByName(String name) {
+    public static AsmNumber getDataByName(String name) {
         return asmNumberList.stream()
                 .filter(el -> el.getName().equals(name))
                 .findFirst()

@@ -5,6 +5,7 @@ import come.example.utitled.syntax.AsmOperations;
 public abstract class Command {
 
     protected AsmOperations operator;
+    protected Integer number;
 
     public abstract String getValue1();
     public abstract String getValue2();
@@ -19,4 +20,11 @@ public abstract class Command {
         return String.format("%s %s %s", getOperator().getName(), getValue1(), getValue2());
     }
 
+    public Integer getNumber() {
+        return number;
+    }
+
+    public void setNumber(Integer number) {
+        this.number = number;
+    }
 }

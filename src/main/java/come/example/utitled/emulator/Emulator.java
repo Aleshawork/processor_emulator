@@ -3,6 +3,8 @@ package come.example.utitled.emulator;
 import com.google.common.collect.Lists;
 import come.example.utitled.emulator.asm.structure.BinarCommand;
 import come.example.utitled.emulator.asm.structure.Command;
+import come.example.utitled.emulator.asm.structure.TransitionCommand;
+import come.example.utitled.emulator.asm.structure.UnarCommand;
 import come.example.utitled.emulator.asm.structure.flag.ZeroFlag;
 import come.example.utitled.emulator.asm.structure.register.NumericRegister;
 import come.example.utitled.emulator.asm.structure.register.RefRegister;
@@ -17,19 +19,30 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 
+
 public class Emulator {
 
     /** Поддерживаемые в эмуляторе регистры **/
-    private final List<String> supportedFullRegisters = Lists.newArrayList("eax", "esi", "ecx", "ebp", "esp", "edi");
-    private final List<String> supportedYangRegisters = Lists.newArrayList("ax", "dx", "esi");
+    private static final List<String> supportedFullRegisters = Lists.newArrayList("eax", "esi", "ecx", "ebp", "esp", "edi");
+    private static final List<String> supportedYangRegisters = Lists.newArrayList("ax", "dx", "esi");
 
     private AsmProgramContext asmProgramContext;
 
+    private static Map<AsmOperations, String> operationNumbers = new HashMap<>(6);
     /** наименование регистра - Регистр **/
     private Map<RegisterName, Register> registers = new HashMap<>();
     private Iterator<Command> currentCommandIterator;
     private Iterator<Map.Entry<String, List<Command>>> functionCommandIterator;
     private ZeroFlag zeroFlag = new ZeroFlag();
+
+    static {
+        operationNumbers.put(AsmOperations.MOV, "1");
+        operationNumbers.put(AsmOperations.XOR, "2");
+        operationNumbers.put(AsmOperations.ADD, "3");
+        operationNumbers.put(AsmOperations.IMUL, "4");
+        operationNumbers.put(AsmOperations.DEC, "5");
+        operationNumbers.put(AsmOperations.JNZ, "6");
+    }
 
     public Emulator(AsmProgramContext asmProgramContext) {
         this.asmProgramContext = asmProgramContext;
@@ -42,23 +55,114 @@ public class Emulator {
         Command command = doStep();
         while(command!=null) {
             Map<RegisterName, Register> registerNameRegisterMap = processCommand(command);
-            outRegistersData(registerNameRegisterMap, command.commandToString());
+            outRegistersData(registerNameRegisterMap, command, command.getNumber());
             command = doStep();
         }
     }
 
-    public void outRegistersData(Map<RegisterName, Register> registers, String command) {
-        System.out.println(String.format("Команда на выполнение: %s", command));
+    public void outRegistersData(Map<RegisterName, Register> registers, Command command, int programCounter) {
+        System.out.println(String.format("Команда на выполнение: %s.   PC: %d.  RC: %s", command.commandToString(), programCounter, calculateRC(command, registers)));
         registers.entrySet()
                 .forEach(register -> {
                     if (register.getValue() instanceof RefRegister ) {
-                        System.out.println(String.format("%s  :  %s", register.getKey().name(), AsmProgramContext.getRefRegValue(((RefRegister)register.getValue()).getValue(), (RefRegister) register.getValue())));
+                        System.out.println(String.format("%s  :  %s.", register.getKey().name(), AsmProgramContext.getRefRegValue(((RefRegister)register.getValue()).getValue(), (RefRegister) register.getValue())));
                     } else {
-                        System.out.println(String.format("%s  :  %s", register.getKey().name(), register.getValue().getValue()));
+                        System.out.println(String.format("%s  :  %s.", register.getKey().name(), register.getValue().getValue()));
                     }
                 });
 
         System.out.println("-----------------------------------------------------");
+    }
+
+    /**
+     *
+     * 0x   | s1   | s2   | S3   | s4
+     *        8бит  4бит    4 бит  16бит
+     * s1 - тип операции:
+     *      - MOV - 1
+     *      - XOR - 2
+     *      - ADD - 3
+     *      - IMUL- 4
+     *      - DEC - 5
+     *      - JNZ - 6
+     *
+     * s2 - тип операндов ( первый | второй )
+     *      - 01 - ссылка (ax)
+     *      - 10 - значение ([ax])
+     *      - 00 -  значение регистра для унарных команд и перехода
+     *
+     *
+     *  s3 -  1 адресс
+     *
+     *
+     *  s4 -  2 адресс
+     */
+    public static String  calculateRC(Command command, Map<RegisterName, Register> registers) {
+        String s0 = "0x";
+        String s1 = "0" + operationNumbers.get(command.getOperator());
+
+        String s2_1 = null;
+        String s2_2 = null;
+        if (command instanceof TransitionCommand) {
+            s2_1 = "00";
+            s2_2 = "00";
+        } else if (command instanceof BinarCommand) {
+            BinarCommand binarCommand = (BinarCommand) command;
+            s2_1 = binarCommand.getValue1().contains("[") ? "10" : "01";
+            s2_2 = binarCommand.getValue2().contains("[") ? "10" : "01";
+        } else {
+            // Unar command;
+            UnarCommand unarCommand = (UnarCommand) command;
+            s2_1 =  "01";
+            s2_2 = "00";
+        }
+        String s2 = binaryToDecimal(s2_1 + s2_2);
+        String s3 = getRegisterNumberByCommandValue(command.getValue1(), registers);
+        String s4 = toAllBytes(getRegisterNumberByCommandValue(command.getValue2(), registers));
+        return String.format("%s %s %s %s %s", s0, s1, s2, s3, s4 );
+    }
+
+    public static String toAllBytes(String value) {
+        if (value == "ref") {
+            return value;
+        }
+        String value2 = value;
+        for (int i=0 ; i< 4 - value.length(); i++) {
+            value2 = "0" + value2;
+        }
+        return value2;
+    }
+
+    public static String  getRegisterNumberByCommandValue(String registerName,  Map<RegisterName, Register> registers) {
+        if (Objects.isNull(registerName)) {
+            return "0";
+        }
+        if (registerName.contains("[")) {
+            String argsName = StringUtils.replaceEach(registerName, new String[]{"[","]"}, new String[]{"", ""});
+            if (isRegister(argsName)) {
+                return String.valueOf(AsmProgramContext.getRefRegValue((ArrayReference) (registers.get(RegisterName.valueOf(StringUtils.toRootUpperCase(argsName))).getValue()), (RefRegister) registers.get(RegisterName.valueOf(StringUtils.toRootUpperCase(argsName)))));
+            } else {
+                return String.valueOf(AsmProgramContext.getDataByName(argsName).getValue());
+            }
+        }
+//        if (!isRegister(registerName))
+//            return "ref";
+        if (!StringUtils.containsAny(registerName, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")) {
+            return registerName;
+        }
+        String value = "ref";
+        try {
+            value = RegisterName.valueOf(StringUtils.toRootUpperCase(registerName)).getNumber();
+        } catch (IllegalArgumentException ex) {
+
+        }
+
+        return value;
+    }
+
+    public static String  binaryToDecimal(String binaryString) {
+        int decimalValue = Integer.parseInt(binaryString, 2);
+        return String.valueOf(decimalValue);
     }
 
     /**
@@ -224,7 +328,7 @@ public class Emulator {
      * @see Emulator#supportedFullRegisters 32 битные регистры
      * @see Emulator#supportedYangRegisters 16 битные регистры
      */
-    private boolean isRegister(String name) {
+    private static boolean isRegister(String name) {
         if (supportedFullRegisters.contains(name) || supportedYangRegisters.contains(name)) {
             return true;
         } else

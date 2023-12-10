@@ -10,6 +10,12 @@ public class UnarCommand extends Command {
         this.operator = operator;
         this.value1 = value1;
     }
+    public UnarCommand(AsmOperations operator, String value1, Integer number) {
+        this.operator = operator;
+        this.value1 = value1;
+        this.number = number;
+    }
+
     @Override
     public String getValue1() {
         return value1;

@@ -15,6 +15,12 @@ public class TransitionCommand extends Command {
         this.nameFunctionRef = nameFunctionRef;
     }
 
+    public TransitionCommand(AsmOperations operations, String nameFunctionRef, Integer number) {
+        this.operator = operations;
+        this.nameFunctionRef = nameFunctionRef;
+        this.number = number;
+    }
+
 
     @Override
     public String getValue1() {
