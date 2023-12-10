@@ -9,7 +9,7 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) throws IOException {
         AsmProgramContext asmProgramContext = new AsmProgramContext();
-        ProgramParser programParser = new ProgramParser(asmProgramContext);
+        ProgramParser programParser = new ProgramParser(asmProgramContext, "program_2.txt");
         asmProgramContext = programParser.parse();
 
         Emulator emulator = new Emulator(asmProgramContext);

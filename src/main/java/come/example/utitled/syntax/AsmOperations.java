@@ -7,6 +7,7 @@ public enum AsmOperations {
     MOV("mov", "Переместить"),
     XOR("XOR", "Исключающее или"),
     ADD("add", "Сложение"),
+    IMUL("imul", "Умножение"),
 
     DEC("dec", "Декремент"),
     JNZ("jnz", "Условный переход") // jump if not zero

@@ -20,8 +20,8 @@ import java.util.*;
 public class Emulator {
 
     /** Поддерживаемые в эмуляторе регистры **/
-    private final List<String> supportedFullRegisters = Lists.newArrayList("eax","esi","ecx");
-    private final List<String> supportedYangRegisters = Lists.newArrayList("ax","esi");
+    private final List<String> supportedFullRegisters = Lists.newArrayList("eax", "esi", "ecx", "ebp", "esp", "edi");
+    private final List<String> supportedYangRegisters = Lists.newArrayList("ax", "dx", "esi");
 
     private AsmProgramContext asmProgramContext;
 
@@ -51,7 +51,7 @@ public class Emulator {
         System.out.println(String.format("Команда на выполнение: %s", command));
         registers.entrySet()
                 .forEach(register -> {
-                    if (register.getValue() instanceof RefRegister) {
+                    if (register.getValue() instanceof RefRegister ) {
                         System.out.println(String.format("%s  :  %s", register.getKey().name(), AsmProgramContext.getRefRegValue(((RefRegister)register.getValue()).getValue(), (RefRegister) register.getValue())));
                     } else {
                         System.out.println(String.format("%s  :  %s", register.getKey().name(), register.getValue().getValue()));
@@ -205,6 +205,9 @@ public class Emulator {
                 register = secondRegister instanceof RefRegister ? AsmOPerationRealization.MOV_REF_REGISTER.apply(firstRegister, secondRegister) :
                         AsmOPerationRealization.MOV_REGISTER.apply(firstRegister, secondRegister);
                 registers.replace(register.getRegisterName(), register);
+                break;
+            case IMUL:
+                register = AsmOPerationRealization.IMUL_REGISTER.apply(firstRegister, secondRegister);
                 break;
             default:
                 throw new NotFoundBinaryCommandException(String.format("Не найдена бинарная опреация: %s", operator.getName()));

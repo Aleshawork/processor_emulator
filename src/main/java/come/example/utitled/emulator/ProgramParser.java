@@ -29,11 +29,11 @@ public class ProgramParser {
 
     private BufferedReader bufferedReader;
 
-    public ProgramParser(AsmProgramContext asmProgramContext) throws FileNotFoundException {
+    public ProgramParser(AsmProgramContext asmProgramContext, String fileName) throws FileNotFoundException {
         this.asmProgramContext = asmProgramContext;
         asmDataReader = new AsmDataReader(asmProgramContext);
         try {
-            File file = new File(Configuration.PROGRAM_PATH);
+            File file = new File(Configuration.PROGRAM_PATH + fileName);
             FileInputStream fileInputStream = new FileInputStream(file);
             InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, PROGRAM_ENCODING);
             this.bufferedReader = new BufferedReader(inputStreamReader);
