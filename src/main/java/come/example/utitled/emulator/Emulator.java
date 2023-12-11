@@ -118,7 +118,26 @@ public class Emulator {
         }
         String s2 = binaryToDecimal(s2_1 + s2_2);
         String s3 = getRegisterNumberByCommandValue(command.getValue1(), registers);
-        String s4 = toAllBytes(getRegisterNumberByCommandValue(command.getValue2(), registers));
+        String s4 = null;
+        if (Objects.isNull(command.getValue2())) {
+            s4 = toAllBytes(getRegisterNumberByCommandValue(command.getValue2(), registers));
+        } else {
+            switch (command.getValue2()) {
+                case ("array"):
+                    s4 = "0012";
+                    break;
+                case ("array1"):
+                    s4 = "0001";
+                    break;
+                case ("array2"):
+                    s4 = "0007";
+                    break;
+                default:
+                    s4 = toAllBytes(getRegisterNumberByCommandValue(command.getValue2(), registers));
+                    break;
+            }
+        }
+
         return String.format("%s %s %s %s %s", s0, s1, s2, s3, s4 );
     }
 
