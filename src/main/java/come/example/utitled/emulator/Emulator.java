@@ -138,6 +138,10 @@ public class Emulator {
             }
         }
 
+        if (command.getOperator().getName().equals("jnz")) {
+            return "";
+        }
+
         return String.format("%s %s %s %s %s", s0, s1, s2, s3, s4 );
     }
 
